@@ -3,9 +3,11 @@ import fs from 'fs';
 import path from 'path';
 import { Command } from '../types/command';
 import { CustomClient } from '../types/customClient';
+import { logger } from './logger';
 
 export function registerCommands(client: CustomClient): void {
   const commandsPath = path.join(__dirname, '..', 'commands');
+  let commandCount = 0;
   
   function readCommands(dir: string) {
     const files = fs.readdirSync(dir, { withFileTypes: true });
@@ -19,13 +21,14 @@ export function registerCommands(client: CustomClient): void {
         const command = require(filePath) as Command;
         if ('data' in command && 'execute' in command) {
           client.commands.set(command.data.name, command);
-          console.log(`Loaded command: ${command.data.name} from ${filePath}`);
+          commandCount++;
         }
       }
     }
   }
 
   readCommands(commandsPath);
+  logger.info(`Loaded ${commandCount} commands`);
 }
 
 export async function deployCommands(): Promise<void> {
@@ -52,15 +55,15 @@ export async function deployCommands(): Promise<void> {
   const rest = new REST({ version: '10' }).setToken(process.env.TOKEN!);
 
   try {
-    console.log('Started refreshing application (/) commands.');
+    logger.info('Started refreshing application (/) commands.');
 
     await rest.put(
       Routes.applicationCommands(process.env.CLIENT_ID!),
       { body: commands },
     );
 
-    console.log('Successfully reloaded application (/) commands.');
+    logger.info(`Successfully reloaded ${commands.length} application (/) commands.`);
   } catch (error) {
-    console.error(error);
+    logger.error('Failed to reload application (/) commands:', error);
   }
 }

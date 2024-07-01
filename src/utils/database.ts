@@ -1,13 +1,14 @@
 import { PrismaClient } from '@prisma/client'
+import { logger } from './logger';
 
 const prisma = new PrismaClient()
 
 async function connectDatabase() {
+    logger.warn('Attempting to connect to the database...')
   try {
-    await prisma.$connect()
-    console.log('Successfully connected to the database')
+    await prisma.$connect();
   } catch (error) {
-    console.error('Failed to connect to the database:', error)
+    logger.error('Failed to connect to the database:', error)
     process.exit(1)
   }
 }
@@ -18,7 +19,7 @@ connectDatabase()
 // Gracefully disconnect when the application shuts down
 process.on('SIGINT', async () => {
   await prisma.$disconnect()
-  console.log('Disconnected from the database')
+  logger.info('Disconnected from the database')
   process.exit(0)
 })
 

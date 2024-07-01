@@ -1,9 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 import { CustomClient } from '../types/customClient';
+import { logger } from './logger';
 
 export function registerEvents(client: CustomClient): void {
   const eventsPath = path.join(__dirname, '..', 'events');
+  let eventCount = 0;
   
   function readEvents(dir: string) {
     const files = fs.readdirSync(dir, { withFileTypes: true });
@@ -20,10 +22,11 @@ export function registerEvents(client: CustomClient): void {
         } else {
           client.on(event.name, (...args) => event.execute(...args));
         }
-        console.log(`Loaded event: ${event.name} from ${filePath}`);
+        eventCount++;
       }
     }
   }
 
   readEvents(eventsPath);
+  logger.info(`Loaded ${eventCount} events`);
 }
