@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node dist/index.js",
-    "dev": "ts-node src/index.ts",
+    "dev": "nodemon src/index.ts",
     "build": "tsc",
     "deploy": "ts-node src/utils/commandLoader.ts"
   },
@@ -14,9 +14,12 @@
   "description": "",
   "dependencies": {
     "@prisma/client": "^5.16.1",
+    "@types/moment-timezone": "^0.5.30",
+    "@vitalets/google-translate-api": "^9.2.0",
     "colorette": "^2.0.20",
     "discord.js": "^14.15.3",
     "dotenv": "^16.4.5",
+    "moment-timezone": "^0.5.45",
     "nodemon": "^3.1.4",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.2"
