@@ -11,6 +11,7 @@ const helpCommand = {
   data: new SlashCommandBuilder()
     .setName('help')
     .setDescription('Shows a list of available commands'),
+  category: 'Utility', // Add the category for the help command itself
 
   async execute(interaction: ChatInputCommandInteraction) {
     const client = interaction.client as CustomClient;
@@ -18,11 +19,10 @@ const helpCommand = {
 
     // Sort commands by category
     const commandsByCategory: CommandsByCategory = commands.reduce((acc, command) => {
-      const category = command.data.name.includes('/') ? command.data.name.split('/')[0] : 'General';
-      if (!acc[category]) {
-        acc[category] = [];
+      if (!acc[command.category]) {
+        acc[command.category] = [];
       }
-      acc[category].push({ name: command.data.name, description: command.data.description });
+      acc[command.category].push({ name: command.data.name, description: command.data.description });
       return acc;
     }, {} as CommandsByCategory);
 
@@ -35,7 +35,7 @@ const helpCommand = {
 
     const generateEmbed = (page: number) => {
       const embed = new EmbedBuilder()
-        .setColor('#FF69B4') // Hot pink color
+        .setColor('#FF69B4')
         .setTitle('📚 Command Help Menu')
         .setDescription('Here\'s a list of all available commands:')
         .setFooter({ text: `Page ${page + 1} of ${totalPages} • Use the buttons to navigate` })
