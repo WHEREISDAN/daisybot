@@ -1,4 +1,5 @@
 import { Guild } from 'discord.js';
+import { logger } from '../../utils/logger';
 import prisma from '../../utils/database';
 
 module.exports = {
@@ -10,9 +11,9 @@ module.exports = {
           id: guild.id,
         },
       });
-      console.log(`Bot left a guild: ${guild.name}`);
+      logger.warn(`Bot left a guild: ${guild.name}`);
     } catch (error) {
-      console.error('Error removing guild from database:', error);
+      logger.error('Error removing guild from database:', error);
     }
   },
 };

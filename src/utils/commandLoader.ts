@@ -4,30 +4,42 @@ import path from 'path';
 import { Command } from '../types/command';
 import { CustomClient } from '../types/customClient';
 import { logger } from './logger';
+import dotenv from 'dotenv';
 
-export function registerCommands(client: CustomClient): void {
+// Load environment variables
+dotenv.config();
+
+export async function registerCommands(client: CustomClient): Promise<void> {
   const commandsPath = path.join(__dirname, '..', 'commands');
   let commandCount = 0;
   
-  function readCommands(dir: string) {
+  async function readCommands(dir: string) {
     const files = fs.readdirSync(dir, { withFileTypes: true });
     
     for (const file of files) {
       const filePath = path.join(dir, file.name);
       
       if (file.isDirectory()) {
-        readCommands(filePath);
+        await readCommands(filePath);
       } else if (file.name.endsWith('.ts')) {
-        const command = require(filePath) as Command;
-        if ('data' in command && 'execute' in command) {
-          client.commands.set(command.data.name, command);
-          commandCount++;
+        try {
+          const commandModule = await import(filePath);
+          const command = commandModule.default as Command;
+          if ('data' in command && 'execute' in command) {
+            client.commands.set(command.data.name, command);
+            commandCount++;
+            logger.debug(`Loaded command: ${command.data.name}`);
+          } else {
+            logger.warn(`Invalid command file structure: ${filePath}`);
+          }
+        } catch (error) {
+          logger.error(`Error loading command file ${filePath}:`, error);
         }
       }
     }
   }
 
-  readCommands(commandsPath);
+  await readCommands(commandsPath);
   logger.info(`Loaded ${commandCount} commands`);
 }
 
@@ -35,30 +47,52 @@ export async function deployCommands(): Promise<void> {
   const commands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
   const commandsPath = path.join(__dirname, '..', 'commands');
   
-  function readCommandsForDeployment(dir: string) {
+  async function readCommandsForDeployment(dir: string) {
     const files = fs.readdirSync(dir, { withFileTypes: true });
     
     for (const file of files) {
       const filePath = path.join(dir, file.name);
       
       if (file.isDirectory()) {
-        readCommandsForDeployment(filePath);
+        await readCommandsForDeployment(filePath);
       } else if (file.name.endsWith('.ts')) {
-        const command = require(filePath) as Command;
-        commands.push(command.data.toJSON());
+        try {
+          const commandModule = await import(filePath);
+          const command = commandModule.default as Command;
+          if (command.data && typeof command.data.toJSON === 'function') {
+            commands.push(command.data.toJSON());
+          } else {
+            logger.warn(`Invalid command file structure for deployment: ${filePath}`);
+          }
+        } catch (error) {
+          logger.error(`Error loading command file for deployment ${filePath}:`, error);
+        }
       }
     }
   }
 
-  readCommandsForDeployment(commandsPath);
+  await readCommandsForDeployment(commandsPath);
 
-  const rest = new REST({ version: '10' }).setToken(process.env.TOKEN!);
+  const token = process.env.TOKEN;
+  const clientId = process.env.CLIENT_ID;
+
+  if (!token) {
+    logger.error('Bot token not found in environment variables');
+    return;
+  }
+
+  if (!clientId) {
+    logger.error('Client ID not found in environment variables');
+    return;
+  }
+
+  const rest = new REST({ version: '10' }).setToken(token);
 
   try {
     logger.info('Started refreshing application (/) commands.');
 
     await rest.put(
-      Routes.applicationCommands(process.env.CLIENT_ID!),
+      Routes.applicationCommands(clientId),
       { body: commands },
     );
 

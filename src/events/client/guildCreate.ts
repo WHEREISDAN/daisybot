@@ -1,4 +1,5 @@
 import { Guild } from 'discord.js';
+import { logger } from '../../utils/logger';
 import prisma from '../../utils/database';
 
 module.exports = {
@@ -11,9 +12,9 @@ module.exports = {
           name: guild.name,
         },
       });
-      console.log(`Bot joined a new guild: ${guild.name}`);
+      logger.info(`Bot joined a new guild: ${guild.name}`);
     } catch (error) {
-      console.error('Error saving guild to database:', error);
+      logger.error('Error saving guild to database:', error);
     }
   },
 };

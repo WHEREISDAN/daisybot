@@ -1,12 +1,16 @@
+import dotenv from 'dotenv';
+
+// Load environment variables before anything else
+dotenv.config();
+
 import { GatewayIntentBits } from 'discord.js';
-import { config } from 'dotenv';
 import { registerEvents } from './utils/eventLoader';
-import { registerCommands } from './utils/commandLoader';
+import { registerCommands, deployCommands } from './utils/commandLoader';
+import { registerButtons } from './utils/buttonLoader';
+import { registerSelectMenus } from './utils/selectMenuLoader';
 import { CustomClient } from './types/customClient';
 import prisma from './utils/database';
 import { logger } from './utils/logger';
-
-config();
 
 const client = new CustomClient({
   intents: [
@@ -21,9 +25,14 @@ async function main() {
     await prisma.$connect();
     logger.info('Successfully connected to the database');
 
-    // Register events and commands
+    // Register events, commands, buttons, and select menus
     registerEvents(client);
     registerCommands(client);
+    registerButtons(client);
+    registerSelectMenus(client);
+
+    // Deploy slash commands
+    await deployCommands();
 
     // Login to Discord
     await client.login(process.env.TOKEN);
