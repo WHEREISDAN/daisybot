@@ -1,19 +1,26 @@
-import { Guild } from 'discord.js';
-import { logger } from '../../utils/logger';
-import prisma from '../../utils/database';
+import { Events, GuildMember } from 'discord.js';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 module.exports = {
-  name: 'guildDelete',
-  async execute(guild: Guild) {
+  name: 'guildMemberRemove', // Ensure this matches the event name
+  async execute(member: GuildMember) {
     try {
-      await prisma.guild.delete({
+      // Remove server profile
+      console.log('Removing server profile for user', member.user.tag, 'from guild', member.guild.name);
+      await prisma.serverProfile.delete({
         where: {
-          id: guild.id,
+          userId_guildId: {
+            userId: member.id,
+            guildId: member.guild.id,
+          },
         },
       });
-      logger.warn(`Bot left a guild: ${guild.name}`);
+
+      console.log(`Removed server profile for user ${member.user.tag} from guild ${member.guild.name}`);
     } catch (error) {
-      logger.error('Error removing guild from database:', error);
+      console.error(`Error removing server profile for user ${member.user.tag}:`, error);
     }
   },
 };

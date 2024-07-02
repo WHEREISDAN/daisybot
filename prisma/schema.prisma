@@ -13,4 +13,42 @@ model Guild {
   prefix    String   @default("!")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  serverProfiles ServerProfile[]
+}
+
+model User {
+  id            String         @id
+  globalProfile GlobalProfile?
+  serverProfiles ServerProfile[]
+}
+
+model GlobalProfile {
+  id           Int      @id @default(autoincrement())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id])
+  xp           Int      @default(0)
+  level        Int      @default(1)
+  bio          String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  kicks        Int      @default(0)
+  bans         Int      @default(0)
+  warns        Int      @default(0)
+  mutes        Int      @default(0)
+  reputation   Json     @default("[]")
+}
+
+model ServerProfile {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  guildId   String
+  guild     Guild    @relation(fields: [guildId], references: [id])
+  xp        Int      @default(0)
+  level     Int      @default(1)
+  nickname  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, guildId])
 }
