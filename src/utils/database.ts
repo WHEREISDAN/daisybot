@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { AutoModConfig, AutoModUpdateData } from '../types/autoMod';
 import { logger } from './logger';
 
 const prisma = new PrismaClient()
@@ -196,61 +197,87 @@ export async function removeCurrency(userId: string, amount: number): Promise<nu
 
 function xpForNextLevel(level: number): number {
     return Math.floor(100 * Math.pow(1.1, level));
-  }
-  
-  export async function addXP(userId: string, xpToAdd: number): Promise<{ newXP: number, newLevel: number, didLevelUp: boolean }> {
-    try {
-      const profile = await prisma.globalProfile.findUnique({
-        where: { userId },
-        select: { xp: true, level: true }
-      });
-  
-      if (!profile) {
-        throw new Error('Profile not found');
-      }
-  
-      let newXP = profile.xp + xpToAdd;
-      let newLevel = profile.level;
-      let didLevelUp = false;
-  
-      while (newXP >= xpForNextLevel(newLevel)) {
-        newXP -= xpForNextLevel(newLevel);
-        newLevel++;
-        didLevelUp = true;
-      }
-  
-      await prisma.globalProfile.update({
-        where: { userId },
-        data: { xp: newXP, level: newLevel }
-      });
-  
-      logger.info(`User ${userId} gained ${xpToAdd} XP. New XP: ${newXP}, New Level: ${newLevel}`);
-      return { newXP, newLevel, didLevelUp };
-    } catch (error) {
-      logger.error(`Error adding XP for user ${userId}:`, error);
-      throw error;
-    }
-  }
-  
-  export async function getXPAndLevel(userId: string): Promise<{ xp: number, level: number, xpForNext: number }> {
-    try {
-      const profile = await prisma.globalProfile.findUnique({
-        where: { userId },
-        select: { xp: true, level: true }
-      });
-  
-      if (!profile) {
-        throw new Error('Profile not found');
-      }
-  
-      const xpForNext = xpForNextLevel(profile.level);
-      return { ...profile, xpForNext };
-    } catch (error) {
-      logger.error(`Error getting XP and level for user ${userId}:`, error);
-      throw error;
-    }
-  }
+}
 
-  
+export async function addXP(userId: string, xpToAdd: number): Promise<{ newXP: number, newLevel: number, didLevelUp: boolean }> {
+    try {
+        const profile = await prisma.globalProfile.findUnique({
+            where: { userId },
+            select: { xp: true, level: true }
+        });
+
+        if (!profile) {
+            throw new Error('Profile not found');
+        }
+
+        let newXP = profile.xp + xpToAdd;
+        let newLevel = profile.level;
+        let didLevelUp = false;
+
+        while (newXP >= xpForNextLevel(newLevel)) {
+            newXP -= xpForNextLevel(newLevel);
+            newLevel++;
+            didLevelUp = true;
+        }
+
+        await prisma.globalProfile.update({
+            where: { userId },
+            data: { xp: newXP, level: newLevel }
+        });
+
+        logger.info(`User ${userId} gained ${xpToAdd} XP. New XP: ${newXP}, New Level: ${newLevel}`);
+        return { newXP, newLevel, didLevelUp };
+    } catch (error) {
+        logger.error(`Error adding XP for user ${userId}:`, error);
+        throw error;
+    }
+}
+
+export async function getXPAndLevel(userId: string): Promise<{ xp: number, level: number, xpForNext: number }> {
+    try {
+        const profile = await prisma.globalProfile.findUnique({
+            where: { userId },
+            select: { xp: true, level: true }
+        });
+
+        if (!profile) {
+            throw new Error('Profile not found');
+        }
+
+        const xpForNext = xpForNextLevel(profile.level);
+        return { ...profile, xpForNext };
+    } catch (error) {
+        logger.error(`Error getting XP and level for user ${userId}:`, error);
+        throw error;
+    }
+}
+
+export async function getAutoModConfig(guildId: string): Promise<AutoModConfig | null> {
+    try {
+        const config = await prisma.autoMod.findUnique({
+            where: { guildId },
+        });
+        return config as AutoModConfig | null;
+    } catch (error) {
+        logger.error(`Error getting Auto Mod config for guild ${guildId}:`, error);
+        throw error;
+    }
+}
+
+export async function updateAutoModConfig(guildId: string, data: AutoModUpdateData): Promise<AutoModConfig> {
+    try {
+        const config = await prisma.autoMod.upsert({
+            where: { guildId },
+            update: data,
+            create: { guildId, ...data },
+        });
+        logger.info(`Updated Auto Mod config for guild ${guildId}`);
+        return config as AutoModConfig;
+    } catch (error) {
+        logger.error(`Error updating Auto Mod config for guild ${guildId}:`, error);
+        throw error;
+    }
+}
+
 
 export default prisma

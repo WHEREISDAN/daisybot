@@ -3,6 +3,7 @@ import { getOrCreateGlobalProfile, getOrCreateServerProfile } from '../../utils/
 import { addXP, getXPAndLevel } from '../../utils/database';
 import { generateLevelUpImage } from '../../utils/imageGenerator';
 import { logger } from '../../utils/logger';
+import { runAutoMod } from '../../utils/automod';
 
 // Simple in-memory cache
 const checkedUsers = new Set<string>();
@@ -20,6 +21,10 @@ module.exports = {
 
     // If not in a guild, we don't need to create a profile
     if (!guildId) return;
+
+    // Run Auto Mod checks
+    const isViolation = await runAutoMod(message);
+    if (isViolation) return;
 
     // Check if we've already verified this user recently
     if (checkedUsers.has(userId)) return;
