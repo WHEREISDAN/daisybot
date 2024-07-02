@@ -8,36 +8,38 @@ datasource db {
 }
 
 model Guild {
-  id               String   @id
+  id               String          @id
   name             String
-  prefix           String   @default("!")
+  prefix           String          @default("!")
   welcomeChannelId String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  autoRoles        String[]
   serverProfiles   ServerProfile[]
+  reactionRoles    ReactionRole[]
 }
 
 model User {
-  id            String         @id
-  globalProfile GlobalProfile?
+  id             String          @id
+  globalProfile  GlobalProfile?
   serverProfiles ServerProfile[]
 }
 
 model GlobalProfile {
-  id           Int      @id @default(autoincrement())
-  userId       String   @unique
-  user         User     @relation(fields: [userId], references: [id])
-  xp           Int      @default(0)
-  level        Int      @default(1)
-  currency     Int      @default(0)
-  bio          String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  kicks        Int      @default(0)
-  bans         Int      @default(0)
-  warns        Int      @default(0)
-  mutes        Int      @default(0)
-  reputation   Json     @default("[]")
+  id         Int      @id @default(autoincrement())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id])
+  xp         Int      @default(0)
+  level      Int      @default(1)
+  currency   Int      @default(0)
+  bio        String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  kicks      Int      @default(0)
+  bans       Int      @default(0)
+  warns      Int      @default(0)
+  mutes      Int      @default(0)
+  reputation Json     @default("[]")
 }
 
 model ServerProfile {
@@ -53,4 +55,15 @@ model ServerProfile {
   updatedAt DateTime @updatedAt
 
   @@unique([userId, guildId])
+}
+
+model ReactionRole {
+  id        String   @id @default(cuid())
+  guildId   String
+  messageId String
+  roleId    String
+  emoji     String
+  guild     Guild    @relation(fields: [guildId], references: [id])
+
+  @@unique([guildId, messageId, roleId])
 }

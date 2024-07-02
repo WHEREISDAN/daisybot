@@ -1,16 +1,19 @@
-import { GuildMember, AttachmentBuilder, TextChannel } from 'discord.js';
+import { GuildMember, AttachmentBuilder, TextChannel, Role } from 'discord.js';
 import { getOrCreateGlobalProfile, getOrCreateServerProfile } from '../../utils/database';
 import prisma from '../../utils/database';
 import { generateWelcomeImage } from '../../utils/imageGenerator';
 import { logger } from '../../utils/logger';
 
 module.exports = {
-    name: 'guildMemberAdd', // Changed from 'GuildMemberAdd' to 'guildMemberAdd'
+    name: 'guildMemberAdd',
     async execute(member: GuildMember) {
         try {
             // Create or get profiles
             await getOrCreateGlobalProfile(member.id);
             await getOrCreateServerProfile(member.id, member.guild.id);
+
+            // Apply auto roles
+            await applyAutoRoles(member);
 
             // Generate welcome image
             const welcomeImage = await generateWelcomeImage(member.user.username, member.user.displayAvatarURL({ extension: 'png', size: 256 }));
@@ -36,7 +39,30 @@ module.exports = {
                 logger.warn(`No welcome channel configured for guild ${member.guild.name}`);
             }
         } catch (error) {
-            logger.error(`Error in GuildMemberAdd event for ${member.user.tag}:`, error);
+            logger.error(`Error in guildMemberAdd event for ${member.user.tag}:`, error);
         }
     },
 };
+
+async function applyAutoRoles(member: GuildMember) {
+    try {
+        const guild = await prisma.guild.findUnique({
+            where: { id: member.guild.id }
+        });
+
+        if (guild && guild.autoRoles.length > 0) {
+            const rolesToAdd = guild.autoRoles
+                .map((roleId: string) => member.guild.roles.cache.get(roleId))
+                .filter((role: any): role is Role => role !== undefined);
+
+            if (rolesToAdd.length > 0) {
+                await member.roles.add(rolesToAdd);
+                logger.info(`Applied ${rolesToAdd.length} auto roles to ${member.user.tag} in guild ${member.guild.name}`);
+            } else {
+                logger.warn(`No valid auto roles found for ${member.user.tag} in guild ${member.guild.name}`);
+            }
+        }
+    } catch (error) {
+        logger.error(`Error applying auto roles to ${member.user.tag}:`, error);
+    }
+}
