@@ -8,12 +8,13 @@ datasource db {
 }
 
 model Guild {
-  id        String   @id
-  name      String
-  prefix    String   @default("!")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  serverProfiles ServerProfile[]
+  id               String   @id
+  name             String
+  prefix           String   @default("!")
+  welcomeChannelId String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  serverProfiles   ServerProfile[]
 }
 
 model User {
@@ -28,6 +29,7 @@ model GlobalProfile {
   user         User     @relation(fields: [userId], references: [id])
   xp           Int      @default(0)
   level        Int      @default(1)
+  currency     Int      @default(0)
   bio          String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

@@ -40,15 +40,27 @@ export async function getOrCreateGlobalProfile(userId: string) {
 
 export async function getOrCreateServerProfile(userId: string, guildId: string) {
     try {
-        const profile = await prisma.serverProfile.upsert({
-            where: { userId_guildId: { userId, guildId } },
-            update: {}, // If it exists, don't update anything
-            create: {
-                userId,
-                guildId,
-            },
+        let profile = await prisma.serverProfile.findUnique({
+            where: {
+                userId_guildId: {
+                    userId: userId,
+                    guildId: guildId
+                }
+            }
         });
-        logger.info(`Server profile handled for user ${userId} in guild ${guildId}`);
+
+        if (!profile) {
+            profile = await prisma.serverProfile.create({
+                data: {
+                    userId: userId,
+                    guildId: guildId
+                }
+            });
+            logger.info(`Created new server profile for user ${userId} in guild ${guildId}`);
+        } else {
+            logger.info(`Retrieved existing server profile for user ${userId} in guild ${guildId}`);
+        }
+
         return profile;
     } catch (error) {
         logger.error(`Error in getOrCreateServerProfile for user ${userId} in guild ${guildId}:`, error);
@@ -90,5 +102,149 @@ export async function addReputation(userId: string, change: 1 | -1, reason: stri
         data: { reputation: newReputation },
     });
 }
+
+export async function setWelcomeChannel(guildId: string, channelId: string, guildName: string) {
+    try {
+        await prisma.guild.upsert({
+            where: { id: guildId },
+            update: { welcomeChannelId: channelId },
+            create: {
+                id: guildId,
+                name: guildName,  // Include the name field
+                welcomeChannelId: channelId
+            }
+        });
+        logger.info(`Set welcome channel for guild ${guildId} to ${channelId}`);
+    } catch (error) {
+        logger.error(`Error setting welcome channel for guild ${guildId}:`, error);
+        throw error;
+    }
+}
+
+export async function getWelcomeChannel(guildId: string): Promise<string | null> {
+    try {
+        const guild = await prisma.guild.findUnique({
+            where: { id: guildId },
+            select: { welcomeChannelId: true }
+        });
+        return guild?.welcomeChannelId || null;
+    } catch (error) {
+        logger.error(`Error getting welcome channel for guild ${guildId}:`, error);
+        throw error;
+    }
+}
+
+export async function getCurrency(userId: string): Promise<number> {
+    try {
+        const profile = await prisma.globalProfile.findUnique({
+            where: { userId },
+            select: { currency: true }
+        });
+        return profile?.currency ?? 0;
+    } catch (error) {
+        logger.error(`Error getting currency for user ${userId}:`, error);
+        throw error;
+    }
+}
+
+export async function addCurrency(userId: string, amount: number): Promise<number> {
+    try {
+        const updatedProfile = await prisma.globalProfile.upsert({
+            where: { userId },
+            update: { currency: { increment: amount } },
+            create: { userId, currency: amount },
+            select: { currency: true }
+        });
+        logger.info(`Added ${amount} currency to user ${userId}. New balance: ${updatedProfile.currency}`);
+        return updatedProfile.currency;
+    } catch (error) {
+        logger.error(`Error adding currency for user ${userId}:`, error);
+        throw error;
+    }
+}
+
+export async function removeCurrency(userId: string, amount: number): Promise<number> {
+    try {
+        const profile = await prisma.globalProfile.findUnique({
+            where: { userId },
+            select: { currency: true }
+        });
+
+        if (!profile || profile.currency < amount) {
+            throw new Error('Insufficient funds');
+        }
+
+        const updatedProfile = await prisma.globalProfile.update({
+            where: { userId },
+            data: { currency: { decrement: amount } },
+            select: { currency: true }
+        });
+
+        logger.info(`Removed ${amount} currency from user ${userId}. New balance: ${updatedProfile.currency}`);
+        return updatedProfile.currency;
+    } catch (error) {
+        logger.error(`Error removing currency for user ${userId}:`, error);
+        throw error;
+    }
+}
+
+function xpForNextLevel(level: number): number {
+    return Math.floor(100 * Math.pow(1.1, level));
+  }
+  
+  export async function addXP(userId: string, xpToAdd: number): Promise<{ newXP: number, newLevel: number, didLevelUp: boolean }> {
+    try {
+      const profile = await prisma.globalProfile.findUnique({
+        where: { userId },
+        select: { xp: true, level: true }
+      });
+  
+      if (!profile) {
+        throw new Error('Profile not found');
+      }
+  
+      let newXP = profile.xp + xpToAdd;
+      let newLevel = profile.level;
+      let didLevelUp = false;
+  
+      while (newXP >= xpForNextLevel(newLevel)) {
+        newXP -= xpForNextLevel(newLevel);
+        newLevel++;
+        didLevelUp = true;
+      }
+  
+      await prisma.globalProfile.update({
+        where: { userId },
+        data: { xp: newXP, level: newLevel }
+      });
+  
+      logger.info(`User ${userId} gained ${xpToAdd} XP. New XP: ${newXP}, New Level: ${newLevel}`);
+      return { newXP, newLevel, didLevelUp };
+    } catch (error) {
+      logger.error(`Error adding XP for user ${userId}:`, error);
+      throw error;
+    }
+  }
+  
+  export async function getXPAndLevel(userId: string): Promise<{ xp: number, level: number, xpForNext: number }> {
+    try {
+      const profile = await prisma.globalProfile.findUnique({
+        where: { userId },
+        select: { xp: true, level: true }
+      });
+  
+      if (!profile) {
+        throw new Error('Profile not found');
+      }
+  
+      const xpForNext = xpForNextLevel(profile.level);
+      return { ...profile, xpForNext };
+    } catch (error) {
+      logger.error(`Error getting XP and level for user ${userId}:`, error);
+      throw error;
+    }
+  }
+
+  
 
 export default prisma
