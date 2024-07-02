@@ -25,6 +25,12 @@ process.on('SIGINT', async () => {
 
 export async function getOrCreateGlobalProfile(userId: string) {
     try {
+        await prisma.user.upsert({
+            where: { id: userId },
+            update: {}, // No update needed
+            create: { id: userId },
+        });
+
         const profile = await prisma.globalProfile.upsert({
             where: { userId },
             update: {}, // If it exists, don't update anything

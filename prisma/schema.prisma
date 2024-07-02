@@ -17,6 +17,7 @@ model Guild {
   autoRoles        String[]
   serverProfiles   ServerProfile[]
   reactionRoles    ReactionRole[]
+  autoMod          AutoMod?
 }
 
 model User {
@@ -66,4 +67,26 @@ model ReactionRole {
   guild     Guild    @relation(fields: [guildId], references: [id])
 
   @@unique([guildId, messageId, roleId])
+}
+
+model AutoMod {
+  id                    String  @id @default(cuid())
+  guild                 Guild   @relation(fields: [guildId], references: [id])
+  guildId               String  @unique
+  enabled               Boolean @default(false)
+  logChannelId          String?
+  profanityFilterEnabled Boolean @default(false)
+  profanityWordList     String[]
+  spamDetectionEnabled  Boolean @default(false)
+  maxMessagesPerMinute  Int     @default(5)
+  inviteLinkDetectionEnabled Boolean @default(false)
+  allowedInvites        String[]
+  capsDetectionEnabled  Boolean @default(false)
+  maxCapsPercentage     Int     @default(70)
+  mentionLimitEnabled   Boolean @default(false)
+  maxMentionsPerMessage Int     @default(5)
+  emojiLimitEnabled     Boolean @default(false)
+  maxEmojisPerMessage   Int     @default(10)
+  phishingDetectionEnabled Boolean @default(false)
+  punishmentLadder      Json    @default("[]") // Store as JSON array of actions
 }
