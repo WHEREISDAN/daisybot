@@ -40,7 +40,7 @@ module.exports = {
         { name: 'Winner Role', value: winnerRole ? winnerRole.name : 'No role assigned' },
         { name: 'Hosted by', value: interaction.user.toString() }
       )
-      .setFooter({ text: 'Click the button below to enter!' })
+      .setFooter({ text: 'Click the button below to enter!' }) 
       .setTimestamp(); 
 
     const button = new ButtonBuilder()
