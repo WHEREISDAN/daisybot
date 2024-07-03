@@ -6,7 +6,7 @@ dotenv.config();
 import { GatewayIntentBits } from 'discord.js';
 import { registerEvents } from './utils/eventLoader';
 import { registerCommands, deployCommands } from './utils/commandLoader';
-import { registerButtons } from './utils/buttonLoader';
+import { registerButtons } from './utils/buttonHandler';
 import { registerSelectMenus } from './utils/selectMenuLoader';
 import { CustomClient } from './types/customClient';
 import prisma from './utils/database';
@@ -32,8 +32,8 @@ async function main() {
 
     // Register events, commands, buttons, and select menus
     registerEvents(client);
-    registerCommands(client);
     registerButtons(client);
+    registerCommands(client);
     registerSelectMenus(client);
 
     // Deploy slash commands
