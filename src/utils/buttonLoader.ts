@@ -17,10 +17,14 @@ export function registerButtons(client: CustomClient): void {
       if (file.isDirectory()) {
         readButtons(filePath);
       } else if (file.name.endsWith('.ts')) {
-        const button = require(filePath) as Button;
-        if ('name' in button && 'execute' in button) {
-          client.buttons.set(button.name, button);
+        const buttonModule = require(filePath);
+        const button: Button = buttonModule.button;
+        
+        if (button && 'data' in button && 'execute' in button) {
+          client.buttons.set(button.data.name, button);
           buttonCount++;
+        } else {
+          logger.warn(`Invalid button file structure: ${filePath}`);
         }
       }
     }

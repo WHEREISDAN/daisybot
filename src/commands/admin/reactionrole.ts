@@ -107,56 +107,45 @@ async function createReactionRoleMessage(interaction: ChatInputCommandInteractio
 }
 
 async function addRoleToMessage(interaction: ChatInputCommandInteraction) {
-  const messageId = interaction.options.getString('message_id', true);
-  const role = interaction.options.getRole('role', true);
-  const description = interaction.options.getString('description', true);
-  const emoji = interaction.options.getString('emoji', true);
-
-  const channel = interaction.channel as TextChannel;
-  const message = await channel.messages.fetch(messageId).catch(() => null);
-
-  if (!message) {
-    await interaction.reply({ content: 'Message not found in this channel.', ephemeral: true });
-    return;
-  }
-
-  const embed = EmbedBuilder.from(message.embeds[0]);
-//   embed.addFields({ name: role.name, value: `${emoji} ${description}`, inline: true });
-
-  const newButton = new ButtonBuilder()
-    .setCustomId(`role_${role.id}`)
-    .setLabel(role.name)
-    .setEmoji(emoji)
-    .setStyle(ButtonStyle.Primary);
-
-  let actionRow = new ActionRowBuilder<ButtonBuilder>();
+    const messageId = interaction.options.getString('message_id', true);
+    const role = interaction.options.getRole('role', true);
+    const description = interaction.options.getString('description', true);
+    const emoji = interaction.options.getString('emoji', true);
   
-  if (message.components.length > 0) {
-    const existingButtons = message.components[0].components
-      .filter(component => component.type === ComponentType.Button)
-      .map(component => {
-        const button = component as ButtonComponent;
-        return ButtonBuilder.from(button);
-      });
-    actionRow.addComponents(existingButtons);
-  }
+    const channel = interaction.channel as TextChannel;
+    const message = await channel.messages.fetch(messageId).catch(() => null);
   
-  actionRow.addComponents(newButton);
-
-  await message.edit({ embeds: [embed], components: [actionRow] });
-
-  await prisma.reactionRole.create({
-    data: {
-      guildId: interaction.guildId!,
-      messageId: message.id,
-      roleId: role.id,
-      emoji: emoji,
-    },
-  });
-
-  await interaction.reply({ content: `Added ${role.name} to the reaction role message.`, ephemeral: true });
-  logger.info(`Role ${role.name} added to reaction role message in guild ${interaction.guildId} by ${interaction.user.tag}`);
-}
+    if (!message) {
+      await interaction.reply({ content: 'Message not found in this channel.', ephemeral: true });
+      return;
+    }
+  
+    const embed = EmbedBuilder.from(message.embeds[0]);
+    embed.addFields({ name: role.name, value: `${emoji} ${description}`, inline: true });
+  
+    const newButton = new ButtonBuilder()
+      .setCustomId(`toggleRole:${role.id}`)
+      .setLabel(role.name)
+      .setEmoji(emoji)
+      .setStyle(ButtonStyle.Primary);
+  
+    let actionRow = (message.components[0] as unknown as ActionRowBuilder<ButtonBuilder>) || new ActionRowBuilder<ButtonBuilder>();
+    actionRow.addComponents(newButton);
+  
+    await message.edit({ embeds: [embed], components: [actionRow] });
+  
+    await prisma.reactionRole.create({
+      data: {
+        guildId: interaction.guildId!,
+        messageId: message.id,
+        roleId: role.id,
+        emoji: emoji,
+      },
+    });
+  
+    await interaction.reply({ content: `Added ${role.name} to the reaction role message.`, ephemeral: true });
+    logger.info(`Role ${role.name} added to reaction role message in guild ${interaction.guildId} by ${interaction.user.tag}`);
+  }
 
 async function removeRoleFromMessage(interaction: ChatInputCommandInteraction) {
   const messageId = interaction.options.getString('message_id', true);
