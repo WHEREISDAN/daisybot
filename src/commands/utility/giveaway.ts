@@ -41,7 +41,7 @@ module.exports = {
         { name: 'Hosted by', value: interaction.user.toString() }
       )
       .setFooter({ text: 'Click the button below to enter!' })
-      .setTimestamp();  //test
+      .setTimestamp();
 
     const button = new ButtonBuilder()
       .setCustomId('enterGiveaway')
