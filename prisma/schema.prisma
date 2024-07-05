@@ -12,12 +12,14 @@ model Guild {
   name             String
   prefix           String          @default("!")
   welcomeChannelId String?
+  logChannelId     String?
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
   autoRoles        String[]
   serverProfiles   ServerProfile[]
   reactionRoles    ReactionRole[]
   autoMod          AutoMod?
+  logConfig        LogConfig?
 }
 
 model User {
@@ -89,4 +91,35 @@ model AutoMod {
   maxEmojisPerMessage   Int     @default(10)
   phishingDetectionEnabled Boolean @default(false)
   punishmentLadder      Json    @default("[]") // Store as JSON array of actions
+}
+
+model LogConfig {
+  id                           String  @id @default(cuid())
+  guildId                      String  @unique
+  guild                        Guild   @relation(fields: [guildId], references: [id])
+  warns                        Boolean @default(false)
+  messageDelete                Boolean @default(false)
+  messageUpdate                Boolean @default(false)
+  messageBulkDelete            Boolean @default(false)
+  messageReactionAdd           Boolean @default(false)
+  messageReactionRemove        Boolean @default(false)
+  messageReactionRemoveAll     Boolean @default(false)
+  messageReactionRemoveEmoji   Boolean @default(false)
+  channelCreate                Boolean @default(false)
+  channelDelete                Boolean @default(false)
+  channelUpdate                Boolean @default(false)
+  channelPinsUpdate            Boolean @default(false)
+  guildMemberAdd               Boolean @default(false)
+  guildMemberRemove            Boolean @default(false)
+  guildMemberUpdate            Boolean @default(false)
+  guildBanAdd                  Boolean @default(false)
+  guildBanRemove               Boolean @default(false)
+  guildRoleCreate              Boolean @default(false)
+  guildRoleDelete              Boolean @default(false)
+  guildRoleUpdate              Boolean @default(false)
+  guildEmojisUpdate            Boolean @default(false)
+  guildInviteCreate            Boolean @default(false)
+  guildInviteDelete            Boolean @default(false)
+  guildWebhooksUpdate          Boolean @default(false)
+  guildUpdate                  Boolean @default(false)
 }

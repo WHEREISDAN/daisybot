@@ -18,7 +18,6 @@ module.exports = {
           },
         },
       });
-
       logger.info(`Removed server profile for user ${member.user.tag} from guild ${member.guild.name}`);
     } catch (error) {
       if (error instanceof Error && error.message.includes('Invalid `prisma.serverProfile.delete()`')) {

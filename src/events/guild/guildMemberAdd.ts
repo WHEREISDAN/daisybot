@@ -3,6 +3,8 @@ import { getOrCreateGlobalProfile, getOrCreateServerProfile } from '../../utils/
 import prisma from '../../utils/database';
 import { generateWelcomeImage } from '../../utils/imageGenerator';
 import { logger } from '../../utils/logger';
+import { logManager } from '../../utils/logManager';
+import { log } from 'console';
 
 module.exports = {
     name: 'guildMemberAdd',
@@ -38,6 +40,8 @@ module.exports = {
             } else {
                 logger.warn(`No welcome channel configured for guild ${member.guild.name}`);
             }
+
+            logManager.logMemberAdd(member);
         } catch (error) {
             logger.error(`Error in guildMemberAdd event for ${member.user.tag}:`, error);
         }

@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import { AutoModConfig, AutoModUpdateData } from '../types/autoMod';
 import { logger } from './logger';
+import { LogConfig } from '../types/logConfig';
 
 const prisma = new PrismaClient()
 
@@ -275,6 +276,26 @@ export async function updateAutoModConfig(guildId: string, data: AutoModUpdateDa
         return config as AutoModConfig;
     } catch (error) {
         logger.error(`Error updating Auto Mod config for guild ${guildId}:`, error);
+        throw error;
+    }
+}
+
+export async function getOrCreateLogConfig(guildId: string): Promise<LogConfig | null> {
+    try {
+        let logConfig = await prisma.logConfig.findUnique({
+            where: { guildId },
+        });
+
+        if (!logConfig) {
+            logConfig = await prisma.logConfig.create({
+                data: { guildId },
+            });
+            logger.info(`Created new log config for guild ${guildId}`);
+        }
+
+        return logConfig;
+    } catch (error) {
+        logger.error(`Error getting or creating log config for guild ${guildId}:`, error);
         throw error;
     }
 }
