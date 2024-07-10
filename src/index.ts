@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { TwitchManager } from './utils/twitchManager';
 
 // Load environment variables before anything else
 dotenv.config();
@@ -38,6 +39,14 @@ async function main() {
 
     // Deploy slash commands
     await deployCommands();
+
+    const twitchManager = new TwitchManager(
+      client,
+      process.env.TWITCH_CLIENT_ID!,
+      process.env.TWITCH_CLIENT_SECRET!
+    );
+
+    twitchManager.checkLiveStreams();
 
     // Login to Discord
     await client.login(process.env.TOKEN);

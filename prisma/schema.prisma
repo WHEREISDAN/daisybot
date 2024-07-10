@@ -18,6 +18,8 @@ model Guild {
   autoRoles        String[]
   serverProfiles   ServerProfile[]
   reactionRoles    ReactionRole[]
+  twitchStreamers TwitchStreamer[]
+  twitchNotifyChannelId String?
   autoMod          AutoMod?
   logConfig        LogConfig?
 }
@@ -122,4 +124,15 @@ model LogConfig {
   guildInviteDelete            Boolean @default(false)
   guildWebhooksUpdate          Boolean @default(false)
   guildUpdate                  Boolean @default(false)
+}
+
+model TwitchStreamer {
+  id           String   @id @default(cuid())
+  username     String
+  guildId      String
+  guild        Guild    @relation(fields: [guildId], references: [id])
+  notifyChannelId String
+  lastNotified DateTime?
+
+  @@unique([username, guildId])
 }

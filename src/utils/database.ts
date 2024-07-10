@@ -300,5 +300,83 @@ export async function getOrCreateLogConfig(guildId: string): Promise<LogConfig |
     }
 }
 
+export async function addTwitchStreamer(guildId: string, username: string, notifyChannelId: string): Promise<void> {
+    try {
+        await prisma.twitchStreamer.create({
+            data: {
+                username,
+                guildId,
+                notifyChannelId,
+            },
+        });
+        logger.info(`Added Twitch streamer ${username} for guild ${guildId}`);
+    } catch (error) {
+        logger.error(`Error adding Twitch streamer ${username} for guild ${guildId}:`, error);
+        throw error;
+    }
+}
+
+export async function removeTwitchStreamer(guildId: string, username: string): Promise<void> {
+    try {
+        await prisma.twitchStreamer.deleteMany({
+            where: {
+                guildId,
+                username,
+            },
+        });
+        logger.info(`Removed Twitch streamer ${username} for guild ${guildId}`);
+    } catch (error) {
+        logger.error(`Error removing Twitch streamer ${username} for guild ${guildId}:`, error);
+        throw error;
+    }
+}
+
+export async function getAllTwitchStreamers() {
+    try {
+        return await prisma.twitchStreamer.findMany();
+    } catch (error) {
+        logger.error('Error fetching all Twitch streamers:', error);
+        throw error;
+    }
+}
+
+export async function updateTwitchStreamerLastNotified(streamerId: string, lastNotified: Date | null) {
+    try {
+        await prisma.twitchStreamer.update({
+            where: { id: streamerId },
+            data: { lastNotified },
+        });
+    } catch (error) {
+        logger.error(`Error updating last notified for streamer ${streamerId}:`, error);
+        throw error;
+    }
+}
+
+export async function setTwitchNotifyChannel(guildId: string, channelId: string): Promise<void> {
+    try {
+        await prisma.guild.update({
+            where: { id: guildId },
+            data: { twitchNotifyChannelId: channelId },
+        });
+        logger.info(`Set Twitch notify channel for guild ${guildId} to ${channelId}`);
+    } catch (error) {
+        logger.error(`Error setting Twitch notify channel for guild ${guildId}:`, error);
+        throw error;
+    }
+}
+
+export async function getTwitchNotifyChannel(guildId: string): Promise<string | null> {
+    try {
+        const guild = await prisma.guild.findUnique({
+            where: { id: guildId },
+            select: { twitchNotifyChannelId: true },
+        });
+        return guild?.twitchNotifyChannelId || null;
+    } catch (error) {
+        logger.error(`Error getting Twitch notify channel for guild ${guildId}:`, error);
+        throw error;
+    }
+}
+
 
 export default prisma
