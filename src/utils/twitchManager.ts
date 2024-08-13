@@ -104,6 +104,6 @@ export class TwitchManager {
     }
 
     // Schedule the next check
-    // setTimeout(() => this.checkLiveStreams(), this.refreshTime);
+    setTimeout(() => this.checkLiveStreams(), this.refreshTime);
   }
 }
