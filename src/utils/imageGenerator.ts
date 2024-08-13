@@ -170,37 +170,94 @@ export async function generateDailyImage(username: string, avatarURL: string, am
 export async function generateLevelUpImage(username: string, avatarURL: string, newLevel: number, xp: number, xpForNext: number): Promise<Buffer> {
     const canvas = createCanvas(800, 250);
     const ctx = canvas.getContext('2d');
-  
+
     // Background
     ctx.fillStyle = '#1C1E21';  // Dark background
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
+
     // Add geometric overlay
     drawGeometricOverlay(ctx as any, canvas.width, canvas.height);
-  
+
     // Pink accent line
     ctx.fillStyle = '#FF69B4';  // Hot pink
     ctx.fillRect(0, 0, 5, canvas.height);
-  
+
     // Avatar
     const avatarSize = 180;
     await drawRoundedSquareAvatar(ctx as any, avatarURL, 30, canvas.height / 2 - avatarSize / 2, avatarSize, 20);
-  
+
     // Level Up text
     ctx.font = '44px "LEMONMILK-Medium"';
     ctx.fillStyle = '#FFFFFF';
     ctx.textAlign = 'left';
     ctx.fillText('Level Up!', avatarSize + 60, 80);
-  
+
     // Username
     ctx.font = '32px "LEMONMILK-Medium"';
     ctx.fillStyle = '#FF69B4';  // Hot pink
     ctx.fillText(username, avatarSize + 60, 120);
-  
+
     // New Level
     ctx.font = '36px "LEMONMILK-Medium"';
     ctx.fillStyle = '#99AAB5';  // Light grey
     ctx.fillText(`You are now level ${newLevel}!`, avatarSize + 60, 170);
-  
+
     return canvas.toBuffer('image/png');
-  }
+}
+
+export async function generateSlotsImage(
+    username: string,
+    avatarURL: string,
+    slotResults: string[],
+    winnings: number,
+    newBalance: number,
+    title: string,
+    description: string
+): Promise<Buffer> {
+    const canvas = createCanvas(800, 400);
+    const ctx = canvas.getContext('2d');
+
+    // Background
+    ctx.fillStyle = '#1C1E21';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Add geometric overlay
+    drawGeometricOverlay(ctx as any, canvas.width, canvas.height);
+
+    // Pink accent line
+    ctx.fillStyle = '#FF69B4';
+    ctx.fillRect(0, 0, 5, canvas.height);
+
+    // Avatar
+    const avatarSize = 100;
+    await drawRoundedSquareAvatar(ctx as any, avatarURL, 30, 30, avatarSize, 20);
+
+    // Username
+    ctx.font = '28px "LEMONMILK-Medium"';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText(username, 150, 80);
+
+    // Slot results (using a system font that supports emojis)
+    ctx.font = '80px "Apple Color Emoji"';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'center';
+    console.log(slotResults.join(' '));
+    ctx.strokeText(slotResults.join(' '), canvas.width / 2, 200);
+
+    // Title
+    ctx.font = '36px "LEMONMILK-Medium"';
+    ctx.fillStyle = '#FF69B4';
+    ctx.fillText(title, canvas.width / 2, 260);
+
+    // Description
+    ctx.font = '18px "Roboto"';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText(description, canvas.width / 2, 300);
+
+    // New balance
+    ctx.font = '28px "LEMONMILK-Medium"';
+    ctx.fillStyle = '#99AAB5';
+    ctx.fillText(`New balance: ${newBalance} coins`, canvas.width / 2, 350);
+
+    return canvas.toBuffer('image/png');
+}
