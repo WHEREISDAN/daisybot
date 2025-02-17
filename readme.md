@@ -1,4 +1,4 @@
-# DAISY Bot
+# DAISY Bot (ARCHIVED)
 
 DAISY is a versatile Discord bot designed to enhance your server experience with a wide range of features. From moderation tools to fun games and utility commands, DAISY has something for everyone!
 
